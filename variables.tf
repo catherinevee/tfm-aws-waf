@@ -550,3 +550,735 @@ variable "tags" {
   type        = map(string)
   default     = {}
 } 
+
+# ==============================================================================
+# Enhanced WAF and Security Configuration Variables
+# ==============================================================================
+
+variable "waf_config" {
+  description = "WAF configuration"
+  type = object({
+    enable_waf_web_acl = optional(bool, true)
+    enable_waf_rules = optional(bool, true)
+    enable_waf_rate_limiting = optional(bool, true)
+    enable_waf_managed_rules = optional(bool, true)
+    enable_waf_custom_rules = optional(bool, false)
+    enable_waf_logging = optional(bool, true)
+    enable_waf_monitoring = optional(bool, true)
+    enable_waf_metrics = optional(bool, true)
+    enable_waf_alerts = optional(bool, true)
+    enable_waf_dashboard = optional(bool, true)
+    enable_waf_audit = optional(bool, true)
+    enable_waf_backup = optional(bool, false)
+    enable_waf_disaster_recovery = optional(bool, false)
+  })
+  default = {}
+}
+
+variable "waf_web_acls" {
+  description = "Map of WAF Web ACLs to create"
+  type = map(object({
+    name = string
+    description = optional(string, null)
+    scope = string
+    default_action = object({
+      allow = optional(object({}), {})
+      block = optional(object({}), {})
+    })
+    rules = optional(list(object({
+      name = string
+      priority = number
+      override_action = optional(object({
+        none = optional(object({}), {})
+        count = optional(object({}), {})
+      }), {})
+      visibility_config = object({
+        cloudwatch_metrics_enabled = bool
+        metric_name = string
+        sampled_requests_enabled = bool
+      })
+      action = optional(object({
+        allow = optional(object({}), {})
+        block = optional(object({}), {})
+        count = optional(object({}), {})
+      }), {})
+      statement = object({
+        managed_rule_group_statement = optional(object({
+          name = string
+          vendor_name = string
+          excluded_rule = optional(list(object({
+            name = string
+          })), [])
+        }), {})
+        rate_based_statement = optional(object({
+          limit = number
+          aggregate_key_type = optional(string, "IP")
+          forwarded_ip_config = optional(object({
+            header_name = string
+            fallback_behavior = string
+          }), {})
+        }), {})
+        geo_match_statement = optional(object({
+          country_codes = list(string)
+          forwarded_ip_config = optional(object({
+            header_name = string
+            fallback_behavior = string
+          }), {})
+        }), {})
+        ip_set_reference_statement = optional(object({
+          arn = string
+          ip_set_forwarded_ip_config = optional(object({
+            header_name = string
+            fallback_behavior = string
+            position = string
+          }), {})
+        }), {})
+        regex_pattern_set_reference_statement = optional(object({
+          arn = string
+          field_to_match = object({
+            single_header = optional(object({
+              name = string
+            }), {})
+            single_query_argument = optional(object({
+              name = string
+            }), {})
+            all_query_parameters = optional(object({}), {})
+            uri_path = optional(object({}), {})
+            query_string = optional(object({}), {})
+            body = optional(object({
+              oversize_handling = optional(string, null)
+            }), {})
+            method = optional(object({}), {})
+          })
+          text_transformation = list(object({
+            priority = number
+            type = string
+          }))
+        }), {})
+        rule_group_reference_statement = optional(object({
+          arn = string
+          excluded_rule = optional(list(object({
+            name = string
+          })), [])
+        }), {})
+        and_statement = optional(object({
+          statement = list(object({
+            managed_rule_group_statement = optional(object({
+              name = string
+              vendor_name = string
+              excluded_rule = optional(list(object({
+                name = string
+              })), [])
+            }), {})
+            rate_based_statement = optional(object({
+              limit = number
+              aggregate_key_type = optional(string, "IP")
+              forwarded_ip_config = optional(object({
+                header_name = string
+                fallback_behavior = string
+              }), {})
+            }), {})
+            geo_match_statement = optional(object({
+              country_codes = list(string)
+              forwarded_ip_config = optional(object({
+                header_name = string
+                fallback_behavior = string
+              }), {})
+            }), {})
+            ip_set_reference_statement = optional(object({
+              arn = string
+              ip_set_forwarded_ip_config = optional(object({
+                header_name = string
+                fallback_behavior = string
+                position = string
+              }), {})
+            }), {})
+            regex_pattern_set_reference_statement = optional(object({
+              arn = string
+              field_to_match = object({
+                single_header = optional(object({
+                  name = string
+                }), {})
+                single_query_argument = optional(object({
+                  name = string
+                }), {})
+                all_query_parameters = optional(object({}), {})
+                uri_path = optional(object({}), {})
+                query_string = optional(object({}), {})
+                body = optional(object({
+                  oversize_handling = optional(string, null)
+                }), {})
+                method = optional(object({}), {})
+              })
+              text_transformation = list(object({
+                priority = number
+                type = string
+              }))
+            }), {})
+            rule_group_reference_statement = optional(object({
+              arn = string
+              excluded_rule = optional(list(object({
+                name = string
+              })), [])
+            }), {})
+          }))
+        }), {})
+        or_statement = optional(object({
+          statement = list(object({
+            managed_rule_group_statement = optional(object({
+              name = string
+              vendor_name = string
+              excluded_rule = optional(list(object({
+                name = string
+              })), [])
+            }), {})
+            rate_based_statement = optional(object({
+              limit = number
+              aggregate_key_type = optional(string, "IP")
+              forwarded_ip_config = optional(object({
+                header_name = string
+                fallback_behavior = string
+              }), {})
+            }), {})
+            geo_match_statement = optional(object({
+              country_codes = list(string)
+              forwarded_ip_config = optional(object({
+                header_name = string
+                fallback_behavior = string
+              }), {})
+            }), {})
+            ip_set_reference_statement = optional(object({
+              arn = string
+              ip_set_forwarded_ip_config = optional(object({
+                header_name = string
+                fallback_behavior = string
+                position = string
+              }), {})
+            }), {})
+            regex_pattern_set_reference_statement = optional(object({
+              arn = string
+              field_to_match = object({
+                single_header = optional(object({
+                  name = string
+                }), {})
+                single_query_argument = optional(object({
+                  name = string
+                }), {})
+                all_query_parameters = optional(object({}), {})
+                uri_path = optional(object({}), {})
+                query_string = optional(object({}), {})
+                body = optional(object({
+                  oversize_handling = optional(string, null)
+                }), {})
+                method = optional(object({}), {})
+              })
+              text_transformation = list(object({
+                priority = number
+                type = string
+              }))
+            }), {})
+            rule_group_reference_statement = optional(object({
+              arn = string
+              excluded_rule = optional(list(object({
+                name = string
+              })), [])
+            }), {})
+          }))
+        }), {})
+        not_statement = optional(object({
+          statement = object({
+            managed_rule_group_statement = optional(object({
+              name = string
+              vendor_name = string
+              excluded_rule = optional(list(object({
+                name = string
+              })), [])
+            }), {})
+            rate_based_statement = optional(object({
+              limit = number
+              aggregate_key_type = optional(string, "IP")
+              forwarded_ip_config = optional(object({
+                header_name = string
+                fallback_behavior = string
+              }), {})
+            }), {})
+            geo_match_statement = optional(object({
+              country_codes = list(string)
+              forwarded_ip_config = optional(object({
+                header_name = string
+                fallback_behavior = string
+              }), {})
+            }), {})
+            ip_set_reference_statement = optional(object({
+              arn = string
+              ip_set_forwarded_ip_config = optional(object({
+                header_name = string
+                fallback_behavior = string
+                position = string
+              }), {})
+            }), {})
+            regex_pattern_set_reference_statement = optional(object({
+              arn = string
+              field_to_match = object({
+                single_header = optional(object({
+                  name = string
+                }), {})
+                single_query_argument = optional(object({
+                  name = string
+                }), {})
+                all_query_parameters = optional(object({}), {})
+                uri_path = optional(object({}), {})
+                query_string = optional(object({}), {})
+                body = optional(object({
+                  oversize_handling = optional(string, null)
+                }), {})
+                method = optional(object({}), {})
+              })
+              text_transformation = list(object({
+                priority = number
+                type = string
+              }))
+            }), {})
+            rule_group_reference_statement = optional(object({
+              arn = string
+              excluded_rule = optional(list(object({
+                name = string
+              })), [])
+            }), {})
+          })
+        }), {})
+      })
+    })), [])
+    visibility_config = object({
+      cloudwatch_metrics_enabled = bool
+      metric_name = string
+      sampled_requests_enabled = bool
+    })
+    tags = optional(map(string), {})
+  }))
+  default = {}
+}
+
+variable "waf_ip_sets" {
+  description = "Map of WAF IP Sets to create"
+  type = map(object({
+    name = string
+    description = optional(string, null)
+    scope = string
+    ip_address_version = optional(string, "IPV4")
+    addresses = list(string)
+    tags = optional(map(string), {})
+  }))
+  default = {}
+}
+
+variable "waf_regex_pattern_sets" {
+  description = "Map of WAF Regex Pattern Sets to create"
+  type = map(object({
+    name = string
+    description = optional(string, null)
+    scope = string
+    regular_expression = list(object({
+      regex_string = string
+    }))
+    tags = optional(map(string), {})
+  }))
+  default = {}
+}
+
+variable "waf_rule_groups" {
+  description = "Map of WAF Rule Groups to create"
+  type = map(object({
+    name = string
+    description = optional(string, null)
+    scope = string
+    capacity = number
+    rules = optional(list(object({
+      name = string
+      priority = number
+      override_action = optional(object({
+        none = optional(object({}), {})
+        count = optional(object({}), {})
+      }), {})
+      visibility_config = object({
+        cloudwatch_metrics_enabled = bool
+        metric_name = string
+        sampled_requests_enabled = bool
+      })
+      action = optional(object({
+        allow = optional(object({}), {})
+        block = optional(object({}), {})
+        count = optional(object({}), {})
+      }), {})
+      statement = object({
+        managed_rule_group_statement = optional(object({
+          name = string
+          vendor_name = string
+          excluded_rule = optional(list(object({
+            name = string
+          })), [])
+        }), {})
+        rate_based_statement = optional(object({
+          limit = number
+          aggregate_key_type = optional(string, "IP")
+          forwarded_ip_config = optional(object({
+            header_name = string
+            fallback_behavior = string
+          }), {})
+        }), {})
+        geo_match_statement = optional(object({
+          country_codes = list(string)
+          forwarded_ip_config = optional(object({
+            header_name = string
+            fallback_behavior = string
+          }), {})
+        }), {})
+        ip_set_reference_statement = optional(object({
+          arn = string
+          ip_set_forwarded_ip_config = optional(object({
+            header_name = string
+            fallback_behavior = string
+            position = string
+          }), {})
+        }), {})
+        regex_pattern_set_reference_statement = optional(object({
+          arn = string
+          field_to_match = object({
+            single_header = optional(object({
+              name = string
+            }), {})
+            single_query_argument = optional(object({
+              name = string
+            }), {})
+            all_query_parameters = optional(object({}), {})
+            uri_path = optional(object({}), {})
+            query_string = optional(object({}), {})
+            body = optional(object({
+              oversize_handling = optional(string, null)
+            }), {})
+            method = optional(object({}), {})
+          })
+          text_transformation = list(object({
+            priority = number
+            type = string
+          }))
+        }), {})
+        rule_group_reference_statement = optional(object({
+          arn = string
+          excluded_rule = optional(list(object({
+            name = string
+          })), [])
+        }), {})
+        and_statement = optional(object({
+          statement = list(object({
+            managed_rule_group_statement = optional(object({
+              name = string
+              vendor_name = string
+              excluded_rule = optional(list(object({
+                name = string
+              })), [])
+            }), {})
+            rate_based_statement = optional(object({
+              limit = number
+              aggregate_key_type = optional(string, "IP")
+              forwarded_ip_config = optional(object({
+                header_name = string
+                fallback_behavior = string
+              }), {})
+            }), {})
+            geo_match_statement = optional(object({
+              country_codes = list(string)
+              forwarded_ip_config = optional(object({
+                header_name = string
+                fallback_behavior = string
+              }), {})
+            }), {})
+            ip_set_reference_statement = optional(object({
+              arn = string
+              ip_set_forwarded_ip_config = optional(object({
+                header_name = string
+                fallback_behavior = string
+                position = string
+              }), {})
+            }), {})
+            regex_pattern_set_reference_statement = optional(object({
+              arn = string
+              field_to_match = object({
+                single_header = optional(object({
+                  name = string
+                }), {})
+                single_query_argument = optional(object({
+                  name = string
+                }), {})
+                all_query_parameters = optional(object({}), {})
+                uri_path = optional(object({}), {})
+                query_string = optional(object({}), {})
+                body = optional(object({
+                  oversize_handling = optional(string, null)
+                }), {})
+                method = optional(object({}), {})
+              })
+              text_transformation = list(object({
+                priority = number
+                type = string
+              }))
+            }), {})
+            rule_group_reference_statement = optional(object({
+              arn = string
+              excluded_rule = optional(list(object({
+                name = string
+              })), [])
+            }), {})
+          }))
+        }), {})
+        or_statement = optional(object({
+          statement = list(object({
+            managed_rule_group_statement = optional(object({
+              name = string
+              vendor_name = string
+              excluded_rule = optional(list(object({
+                name = string
+              })), [])
+            }), {})
+            rate_based_statement = optional(object({
+              limit = number
+              aggregate_key_type = optional(string, "IP")
+              forwarded_ip_config = optional(object({
+                header_name = string
+                fallback_behavior = string
+              }), {})
+            }), {})
+            geo_match_statement = optional(object({
+              country_codes = list(string)
+              forwarded_ip_config = optional(object({
+                header_name = string
+                fallback_behavior = string
+              }), {})
+            }), {})
+            ip_set_reference_statement = optional(object({
+              arn = string
+              ip_set_forwarded_ip_config = optional(object({
+                header_name = string
+                fallback_behavior = string
+                position = string
+              }), {})
+            }), {})
+            regex_pattern_set_reference_statement = optional(object({
+              arn = string
+              field_to_match = object({
+                single_header = optional(object({
+                  name = string
+                }), {})
+                single_query_argument = optional(object({
+                  name = string
+                }), {})
+                all_query_parameters = optional(object({}), {})
+                uri_path = optional(object({}), {})
+                query_string = optional(object({}), {})
+                body = optional(object({
+                  oversize_handling = optional(string, null)
+                }), {})
+                method = optional(object({}), {})
+              })
+              text_transformation = list(object({
+                priority = number
+                type = string
+              }))
+            }), {})
+            rule_group_reference_statement = optional(object({
+              arn = string
+              excluded_rule = optional(list(object({
+                name = string
+              })), [])
+            }), {})
+          }))
+        }), {})
+        not_statement = optional(object({
+          statement = object({
+            managed_rule_group_statement = optional(object({
+              name = string
+              vendor_name = string
+              excluded_rule = optional(list(object({
+                name = string
+              })), [])
+            }), {})
+            rate_based_statement = optional(object({
+              limit = number
+              aggregate_key_type = optional(string, "IP")
+              forwarded_ip_config = optional(object({
+                header_name = string
+                fallback_behavior = string
+              }), {})
+            }), {})
+            geo_match_statement = optional(object({
+              country_codes = list(string)
+              forwarded_ip_config = optional(object({
+                header_name = string
+                fallback_behavior = string
+              }), {})
+            }), {})
+            ip_set_reference_statement = optional(object({
+              arn = string
+              ip_set_forwarded_ip_config = optional(object({
+                header_name = string
+                fallback_behavior = string
+                position = string
+              }), {})
+            }), {})
+            regex_pattern_set_reference_statement = optional(object({
+              arn = string
+              field_to_match = object({
+                single_header = optional(object({
+                  name = string
+                }), {})
+                single_query_argument = optional(object({
+                  name = string
+                }), {})
+                all_query_parameters = optional(object({}), {})
+                uri_path = optional(object({}), {})
+                query_string = optional(object({}), {})
+                body = optional(object({
+                  oversize_handling = optional(string, null)
+                }), {})
+                method = optional(object({}), {})
+              })
+              text_transformation = list(object({
+                priority = number
+                type = string
+              }))
+            }), {})
+            rule_group_reference_statement = optional(object({
+              arn = string
+              excluded_rule = optional(list(object({
+                name = string
+              })), [])
+            }), {})
+          })
+        }), {})
+      })
+    })), [])
+    visibility_config = object({
+      cloudwatch_metrics_enabled = bool
+      metric_name = string
+      sampled_requests_enabled = bool
+    })
+    tags = optional(map(string), {})
+  }))
+  default = {}
+}
+
+variable "waf_logging_config" {
+  description = "WAF logging configuration"
+  type = object({
+    enable_waf_logging = optional(bool, true)
+    enable_cloudwatch_logs = optional(bool, true)
+    enable_kinesis_firehose = optional(bool, false)
+    enable_s3_logs = optional(bool, false)
+    log_retention_days = optional(number, 30)
+    log_group_name = optional(string, null)
+    kinesis_firehose_arn = optional(string, null)
+    s3_bucket_arn = optional(string, null)
+    s3_bucket_prefix = optional(string, null)
+    redacted_fields = optional(list(object({
+      single_header = optional(object({
+        name = string
+      }), {})
+      single_query_argument = optional(object({
+        name = string
+      }), {})
+      all_query_parameters = optional(object({}), {})
+      uri_path = optional(object({}), {})
+      query_string = optional(object({}), {})
+      body = optional(object({
+        oversize_handling = optional(string, null)
+      }), {})
+      method = optional(object({}), {})
+    })), [])
+    tags = optional(map(string), {})
+  })
+  default = {}
+}
+
+variable "waf_monitoring_config" {
+  description = "WAF monitoring configuration"
+  type = object({
+    enable_cloudwatch_monitoring = optional(bool, true)
+    enable_cloudwatch_logs = optional(bool, true)
+    enable_cloudwatch_metrics = optional(bool, true)
+    enable_cloudwatch_alarms = optional(bool, true)
+    enable_cloudwatch_dashboard = optional(bool, true)
+    enable_cloudwatch_insights = optional(bool, false)
+    enable_cloudwatch_anomaly_detection = optional(bool, false)
+    enable_cloudwatch_rum = optional(bool, false)
+    enable_cloudwatch_evidently = optional(bool, false)
+    enable_cloudwatch_application_signals = optional(bool, false)
+    enable_cloudwatch_synthetics = optional(bool, false)
+    enable_cloudwatch_contributor_insights = optional(bool, false)
+    enable_cloudwatch_metric_streams = optional(bool, false)
+    enable_cloudwatch_metric_filters = optional(bool, false)
+    enable_cloudwatch_log_groups = optional(bool, true)
+    enable_cloudwatch_log_streams = optional(bool, true)
+    enable_cloudwatch_log_subscriptions = optional(bool, false)
+    enable_cloudwatch_log_insights = optional(bool, false)
+    enable_cloudwatch_log_metric_filters = optional(bool, false)
+    enable_cloudwatch_log_destinations = optional(bool, false)
+    enable_cloudwatch_log_queries = optional(bool, false)
+    enable_cloudwatch_log_analytics = optional(bool, false)
+    enable_cloudwatch_log_visualization = optional(bool, false)
+    enable_cloudwatch_log_reporting = optional(bool, false)
+    enable_cloudwatch_log_archiving = optional(bool, false)
+    enable_cloudwatch_log_backup = optional(bool, false)
+    enable_cloudwatch_log_retention = optional(bool, true)
+    enable_cloudwatch_log_encryption = optional(bool, true)
+    enable_cloudwatch_log_access_logging = optional(bool, false)
+    enable_cloudwatch_log_audit_logging = optional(bool, false)
+    enable_cloudwatch_log_compliance_logging = optional(bool, false)
+    enable_cloudwatch_log_security_logging = optional(bool, false)
+    enable_cloudwatch_log_performance_logging = optional(bool, true)
+    enable_cloudwatch_log_business_logging = optional(bool, false)
+    enable_cloudwatch_log_operational_logging = optional(bool, true)
+    enable_cloudwatch_log_debug_logging = optional(bool, false)
+    enable_cloudwatch_log_trace_logging = optional(bool, false)
+    enable_cloudwatch_log_error_logging = optional(bool, true)
+    enable_cloudwatch_log_warning_logging = optional(bool, true)
+    enable_cloudwatch_log_info_logging = optional(bool, true)
+    enable_cloudwatch_log_debug_logging = optional(bool, false)
+    enable_cloudwatch_log_verbose_logging = optional(bool, false)
+    enable_cloudwatch_log_silent_logging = optional(bool, false)
+  })
+  default = {}
+}
+
+variable "waf_security_config" {
+  description = "WAF security configuration"
+  type = object({
+    enable_waf_encryption = optional(bool, true)
+    enable_waf_access_control = optional(bool, true)
+    enable_waf_audit_logging = optional(bool, true)
+    enable_waf_compliance = optional(bool, false)
+    enable_waf_governance = optional(bool, false)
+    enable_waf_privacy = optional(bool, false)
+    enable_waf_fairness = optional(bool, false)
+    enable_waf_bias_detection = optional(bool, false)
+    enable_waf_explainability = optional(bool, false)
+    enable_waf_interpretability = optional(bool, false)
+    enable_waf_robustness = optional(bool, false)
+    enable_waf_adversarial_protection = optional(bool, false)
+    enable_waf_poisoning_protection = optional(bool, false)
+    enable_waf_extraction_protection = optional(bool, false)
+    enable_waf_inversion_protection = optional(bool, false)
+    enable_waf_membership_inference_protection = optional(bool, false)
+    enable_waf_model_inversion_protection = optional(bool, false)
+    enable_waf_attribute_inference_protection = optional(bool, false)
+    enable_waf_property_inference_protection = optional(bool, false)
+    enable_waf_reconstruction_protection = optional(bool, false)
+    enable_waf_extraction_protection = optional(bool, false)
+    enable_waf_stealing_protection = optional(bool, false)
+    enable_waf_evasion_protection = optional(bool, false)
+    enable_waf_poisoning_protection = optional(bool, false)
+    enable_waf_backdoor_protection = optional(bool, false)
+    enable_waf_trojan_protection = optional(bool, false)
+    enable_waf_trigger_protection = optional(bool, false)
+  })
+  default = {}
+} 
