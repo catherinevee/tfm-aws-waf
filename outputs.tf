@@ -2,28 +2,66 @@
 
 # WAF Outputs
 output "waf_web_acl_id" {
-  description = "ID of the WAF Web ACL"
+  description = "The ID of the WAF Web ACL. Use this for WAF associations with CloudFront or ALB resources."
   value       = aws_wafv2_web_acl.main.id
+  
+  depends_on = [
+    aws_wafv2_web_acl.main
+  ]
 }
 
 output "waf_web_acl_arn" {
-  description = "ARN of the WAF Web ACL"
+  description = "The ARN of the WAF Web ACL. Required for associating with CloudFront distributions or ALB resources."
   value       = aws_wafv2_web_acl.main.arn
+  
+  depends_on = [
+    aws_wafv2_web_acl.main
+  ]
 }
 
 output "waf_web_acl_name" {
-  description = "Name of the WAF Web ACL"
+  description = "The name of the WAF Web ACL. Useful for resource identification and cost allocation."
   value       = aws_wafv2_web_acl.main.name
+  
+  depends_on = [
+    aws_wafv2_web_acl.main
+  ]
 }
 
 output "waf_web_acl_capacity" {
-  description = "Capacity of the WAF Web ACL"
+  description = "The capacity of the WAF Web ACL. This represents the number of rules that can be evaluated per request."
   value       = aws_wafv2_web_acl.main.capacity
+  
+  depends_on = [
+    aws_wafv2_web_acl.main
+  ]
 }
 
 output "waf_web_acl_scope" {
-  description = "Scope of the WAF Web ACL"
+  description = "The scope of the WAF Web ACL (REGIONAL or CLOUDFRONT). Determines where the WAF can be associated."
   value       = aws_wafv2_web_acl.main.scope
+  
+  depends_on = [
+    aws_wafv2_web_acl.main
+  ]
+}
+
+# Composite WAF Configuration Output
+output "waf_configuration" {
+  description = "Complete WAF configuration for external consumption. Contains all essential WAF attributes in a structured format."
+  value = {
+    web_acl_id   = aws_wafv2_web_acl.main.id
+    web_acl_arn  = aws_wafv2_web_acl.main.arn
+    web_acl_name = aws_wafv2_web_acl.main.name
+    scope        = aws_wafv2_web_acl.main.scope
+    capacity     = aws_wafv2_web_acl.main.capacity
+    description  = aws_wafv2_web_acl.main.description
+    default_action = aws_wafv2_web_acl.main.default_action
+  }
+  
+  depends_on = [
+    aws_wafv2_web_acl.main
+  ]
 }
 
 output "waf_ip_set_id" {
@@ -38,64 +76,151 @@ output "waf_ip_set_arn" {
 
 # CloudFront Outputs
 output "cloudfront_distribution_id" {
-  description = "ID of the CloudFront distribution"
+  description = "The ID of the CloudFront distribution. Use this for CloudFront-specific operations and monitoring."
   value       = var.enable_cloudfront ? aws_cloudfront_distribution.main[0].id : null
+  
+  depends_on = [
+    aws_cloudfront_distribution.main
+  ]
 }
 
 output "cloudfront_distribution_arn" {
-  description = "ARN of the CloudFront distribution"
+  description = "The ARN of the CloudFront distribution. Required for IAM policies and cross-account access."
   value       = var.enable_cloudfront ? aws_cloudfront_distribution.main[0].arn : null
+  
+  depends_on = [
+    aws_cloudfront_distribution.main
+  ]
 }
 
 output "cloudfront_distribution_domain_name" {
-  description = "Domain name of the CloudFront distribution"
+  description = "The domain name of the CloudFront distribution. Use this for DNS configuration and application integration."
   value       = var.enable_cloudfront ? aws_cloudfront_distribution.main[0].domain_name : null
+  
+  depends_on = [
+    aws_cloudfront_distribution.main
+  ]
 }
 
 output "cloudfront_distribution_hosted_zone_id" {
-  description = "Hosted zone ID of the CloudFront distribution"
+  description = "The hosted zone ID of the CloudFront distribution. Required for Route 53 alias record configuration."
   value       = var.enable_cloudfront ? aws_cloudfront_distribution.main[0].hosted_zone_id : null
+  
+  depends_on = [
+    aws_cloudfront_distribution.main
+  ]
 }
 
 output "cloudfront_distribution_status" {
-  description = "Status of the CloudFront distribution"
+  description = "The deployment status of the CloudFront distribution. Monitor this for deployment completion."
   value       = var.enable_cloudfront ? aws_cloudfront_distribution.main[0].status : null
+  
+  depends_on = [
+    aws_cloudfront_distribution.main
+  ]
 }
 
 output "cloudfront_distribution_etag" {
-  description = "ETag of the CloudFront distribution"
+  description = "The ETag of the CloudFront distribution. Used for change detection and version control."
   value       = var.enable_cloudfront ? aws_cloudfront_distribution.main[0].etag : null
+  
+  depends_on = [
+    aws_cloudfront_distribution.main
+  ]
+}
+
+# Composite CloudFront Configuration Output
+output "cloudfront_configuration" {
+  description = "Complete CloudFront configuration for external consumption. Contains all essential CloudFront attributes."
+  value = var.enable_cloudfront ? {
+    distribution_id   = aws_cloudfront_distribution.main[0].id
+    distribution_arn  = aws_cloudfront_distribution.main[0].arn
+    domain_name       = aws_cloudfront_distribution.main[0].domain_name
+    hosted_zone_id    = aws_cloudfront_distribution.main[0].hosted_zone_id
+    status            = aws_cloudfront_distribution.main[0].status
+    etag              = aws_cloudfront_distribution.main[0].etag
+    enabled           = aws_cloudfront_distribution.main[0].enabled
+    price_class       = aws_cloudfront_distribution.main[0].price_class
+  } : null
+  
+  depends_on = [
+    aws_cloudfront_distribution.main
+  ]
 }
 
 # ALB Outputs
 output "alb_id" {
-  description = "ID of the Application Load Balancer"
+  description = "The ID of the Application Load Balancer. Use this for ALB-specific operations and monitoring."
   value       = var.enable_alb ? aws_lb.main[0].id : null
+  
+  depends_on = [
+    aws_lb.main
+  ]
 }
 
 output "alb_arn" {
-  description = "ARN of the Application Load Balancer"
+  description = "The ARN of the Application Load Balancer. Required for IAM policies and cross-account access."
   value       = var.enable_alb ? aws_lb.main[0].arn : null
+  
+  depends_on = [
+    aws_lb.main
+  ]
 }
 
 output "alb_name" {
-  description = "Name of the Application Load Balancer"
+  description = "The name of the Application Load Balancer. Useful for resource identification and cost allocation."
   value       = var.enable_alb ? aws_lb.main[0].name : null
+  
+  depends_on = [
+    aws_lb.main
+  ]
 }
 
 output "alb_dns_name" {
-  description = "DNS name of the Application Load Balancer"
+  description = "The DNS name of the Application Load Balancer. Use this for DNS configuration and application integration."
   value       = var.enable_alb ? aws_lb.main[0].dns_name : null
+  
+  depends_on = [
+    aws_lb.main
+  ]
 }
 
 output "alb_zone_id" {
-  description = "Zone ID of the Application Load Balancer"
+  description = "The zone ID of the Application Load Balancer. Required for Route 53 alias record configuration."
   value       = var.enable_alb ? aws_lb.main[0].zone_id : null
+  
+  depends_on = [
+    aws_lb.main
+  ]
 }
 
 output "alb_target_group_id" {
-  description = "ID of the ALB target group"
+  description = "The ID of the ALB target group. Use this for target group operations and health check configuration."
   value       = var.enable_alb ? aws_lb_target_group.main[0].id : null
+  
+  depends_on = [
+    aws_lb_target_group.main
+  ]
+}
+
+# Composite ALB Configuration Output
+output "alb_configuration" {
+  description = "Complete ALB configuration for external consumption. Contains all essential ALB attributes."
+  value = var.enable_alb ? {
+    alb_id   = aws_lb.main[0].id
+    alb_arn  = aws_lb.main[0].arn
+    alb_name = aws_lb.main[0].name
+    dns_name = aws_lb.main[0].dns_name
+    zone_id  = aws_lb.main[0].zone_id
+    internal = aws_lb.main[0].internal
+    target_group_id = aws_lb_target_group.main[0].id
+    target_group_arn = aws_lb_target_group.main[0].arn
+  } : null
+  
+  depends_on = [
+    aws_lb.main,
+    aws_lb_target_group.main
+  ]
 }
 
 output "alb_target_group_arn" {

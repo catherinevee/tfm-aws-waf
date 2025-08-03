@@ -1,6 +1,49 @@
 # AWS WAF + CloudFront/ALB Terraform Module
 # This module creates a comprehensive WAF setup with CloudFront distribution and ALB integration
 
+# Enhanced local value calculations
+locals {
+  # Common tags for all resources
+  common_tags = merge(var.tags, {
+    Module    = "tfm-aws-waf"
+    Version   = "1.0.0"
+    ManagedBy = "terraform"
+    Purpose   = "web-application-firewall"
+  })
+  
+  # Resource naming conventions
+  name_prefix = "${var.waf_web_acl_name}-${var.waf_scope == "CLOUDFRONT" ? "cf" : "regional"}"
+  
+  # WAF rule priorities for consistent ordering
+  rule_priorities = {
+    rate_limiting = 1
+    aws_managed   = 2
+    sql_injection = 3
+    xss_protection = 4
+    ip_reputation = 5
+    geo_blocking  = 6
+    custom_rules_start = 10
+  }
+  
+  # Service enablement validation
+  cloudfront_enabled = var.enable_cloudfront && var.waf_scope == "CLOUDFRONT"
+  alb_enabled = var.enable_alb && var.waf_scope == "REGIONAL"
+  
+  # Logging configuration validation
+  logging_enabled = var.enable_waf_logging && (var.enable_kinesis_firehose || var.enable_cloudwatch_metrics)
+  
+  # Security configurations
+  security_config = {
+    encryption_algorithm = "AES256"
+    minimum_tls_version = "TLSv1.2"
+    ssl_policy = "ELBSecurityPolicy-TLS-1-2-2017-01"
+  }
+  
+  # Validation checks - these will be handled in variable validation blocks
+  cloudfront_scope_valid = var.enable_cloudfront ? var.waf_scope == "CLOUDFRONT" : true
+  alb_scope_valid = var.enable_alb ? var.waf_scope == "REGIONAL" : true
+}
+
 # WAF Web ACL
 resource "aws_wafv2_web_acl" "main" {
   name        = var.waf_web_acl_name
@@ -17,6 +60,8 @@ resource "aws_wafv2_web_acl" "main" {
       content {}
     }
   }
+
+  tags = local.common_tags
 
   # Rate limiting rule
   dynamic "rule" {
@@ -509,15 +554,19 @@ resource "aws_kinesis_firehose_delivery_stream" "waf_logs" {
   count = var.enable_waf_logging && var.enable_kinesis_firehose ? 1 : 0
 
   name        = "${var.waf_web_acl_name}-waf-logs"
-  destination = "s3"
+  destination = "extended_s3"
 
-  s3_configuration {
+  extended_s3_configuration {
     role_arn   = aws_iam_role.firehose_role[0].arn
     bucket_arn = var.waf_logs_s3_bucket_arn
     prefix     = "waf-logs/"
+    
+    # Buffering configuration for performance
+    buffering_interval = 60
+    buffering_size     = 5
   }
 
-  tags = var.tags
+  tags = local.common_tags
 }
 
 # IAM Role for Kinesis Firehose
@@ -564,6 +613,11 @@ resource "aws_iam_role_policy" "firehose_policy" {
           var.waf_logs_s3_bucket_arn,
           "${var.waf_logs_s3_bucket_arn}/*"
         ]
+        Condition = {
+          StringEquals = {
+            "aws:RequestTag/Environment" = lookup(var.tags, "Environment", "production")
+          }
+        }
       }
     ]
   })

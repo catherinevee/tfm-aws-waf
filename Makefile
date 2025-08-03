@@ -57,13 +57,33 @@ lint:
 		exit 1; \
 	fi
 
-# Run tests (requires terratest)
+# Run tests (native Terraform tests)
 test:
-	@echo "Running tests..."
-	@if command -v go >/dev/null 2>&1; then \
-		cd test && go test -v -timeout 30m; \
+	@echo "Running native Terraform tests..."
+	@if command -v terraform >/dev/null 2>&1; then \
+		terraform test tests/; \
 	else \
-		echo "Go not found. Install it to run tests."; \
+		echo "Terraform not found. Install it to run tests."; \
+		exit 1; \
+	fi
+
+# Run comprehensive tests
+test-comprehensive:
+	@echo "Running comprehensive tests..."
+	@if command -v terraform >/dev/null 2>&1; then \
+		terraform test tests/comprehensive.tftest.hcl; \
+	else \
+		echo "Terraform not found. Install it to run tests."; \
+		exit 1; \
+	fi
+
+# Run basic tests
+test-basic:
+	@echo "Running basic tests..."
+	@if command -v terraform >/dev/null 2>&1; then \
+		terraform test tests/basic.tftest.hcl; \
+	else \
+		echo "Terraform not found. Install it to run tests."; \
 		exit 1; \
 	fi
 
@@ -80,8 +100,17 @@ clean:
 docs:
 	@echo "Generating documentation..."
 	@if command -v terraform-docs >/dev/null 2>&1; then \
-		terraform-docs markdown table . > README.md.tmp; \
-		mv README.md.tmp README.md; \
+		terraform-docs markdown table --output-file README.md --output-mode inject .; \
+	else \
+		echo "terraform-docs not found. Install it from https://github.com/terraform-docs/terraform-docs"; \
+		exit 1; \
+	fi
+
+# Generate documentation with all sections
+docs-full:
+	@echo "Generating full documentation..."
+	@if command -v terraform-docs >/dev/null 2>&1; then \
+		terraform-docs markdown document --output-file README.md --output-mode inject .; \
 	else \
 		echo "terraform-docs not found. Install it from https://github.com/terraform-docs/terraform-docs"; \
 		exit 1; \
@@ -146,12 +175,25 @@ clean-examples:
 	cd examples/alb && terraform destroy -auto-approve || true
 
 # Pre-commit checks
-pre-commit: fmt validate lint
+pre-commit: fmt validate lint test-basic security-scan
 	@echo "Pre-commit checks completed successfully!"
 
 # CI/CD pipeline
-ci: init validate fmt lint test
+ci: init validate fmt lint test-comprehensive security-scan cost-estimate
 	@echo "CI pipeline completed successfully!"
+
+# Quality assurance checks
+qa: validate fmt lint test-comprehensive security-scan cost-estimate docs
+	@echo "Quality assurance checks completed successfully!"
+
+# Release preparation
+release-prep: qa
+	@echo "Release preparation completed successfully!"
+	@echo "Next steps:"
+	@echo "1. Update version in versions.tf"
+	@echo "2. Update CHANGELOG.md"
+	@echo "3. Create git tag"
+	@echo "4. Push to repository"
 
 # Development setup
 dev-setup:

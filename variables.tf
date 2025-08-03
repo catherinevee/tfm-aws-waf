@@ -2,9 +2,14 @@
 
 # WAF Configuration
 variable "waf_web_acl_name" {
-  description = "Name of the WAF Web ACL"
+  description = "Name of the WAF Web ACL. Must be unique within the scope and region. Used for resource identification and cost allocation. Follows AWS naming conventions."
   type        = string
   default     = "waf-web-acl"
+
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9-_]+$", var.waf_web_acl_name))
+    error_message = "WAF Web ACL name must contain only alphanumeric characters, hyphens, and underscores."
+  }
 
   validation {
     condition     = length(var.waf_web_acl_name) >= 1 && length(var.waf_web_acl_name) <= 128
@@ -19,7 +24,7 @@ variable "waf_web_acl_description" {
 }
 
 variable "waf_scope" {
-  description = "Scope of the WAF Web ACL (REGIONAL or CLOUDFRONT)"
+  description = "Scope of the WAF Web ACL. Use 'REGIONAL' for Application Load Balancers and API Gateway, or 'CLOUDFRONT' for CloudFront distributions. This setting affects where the WAF can be associated and its pricing model."
   type        = string
   default     = "REGIONAL"
 
@@ -48,13 +53,13 @@ variable "enable_rate_limiting" {
 }
 
 variable "rate_limit" {
-  description = "Rate limit for requests per 5 minutes"
+  description = "Rate limit for requests per 5 minutes. This setting controls how many requests from a single IP address are allowed within a 5-minute window. Set based on your application's expected traffic patterns and security requirements."
   type        = number
   default     = 2000
 
   validation {
     condition     = var.rate_limit >= 100 && var.rate_limit <= 2000000
-    error_message = "Rate limit must be between 100 and 2,000,000."
+    error_message = "Rate limit must be between 100 and 2,000,000 requests per 5 minutes."
   }
 }
 
@@ -83,7 +88,7 @@ variable "enable_ip_reputation_list" {
 }
 
 variable "blocked_ip_addresses" {
-  description = "List of IP addresses to block"
+  description = "List of IP addresses or CIDR blocks to block. These IPs will be automatically blocked by the WAF. Use this for known malicious IPs or geographic restrictions."
   type        = list(string)
   default     = []
 
@@ -91,7 +96,7 @@ variable "blocked_ip_addresses" {
     condition = alltrue([
       for ip in var.blocked_ip_addresses : can(cidrhost(ip, 0))
     ])
-    error_message = "All blocked IP addresses must be valid CIDR blocks."
+    error_message = "All blocked IP addresses must be valid CIDR blocks (e.g., '192.168.1.0/24' or '10.0.0.1/32')."
   }
 }
 
@@ -539,9 +544,15 @@ variable "alb_listener_ssl_policy" {
 }
 
 variable "alb_listener_certificate_arn" {
-  description = "Certificate ARN for the ALB listener"
+  description = "ARN of the SSL certificate for ALB listener. Must be a valid ACM certificate ARN in the same region as the ALB. Required for HTTPS listeners."
   type        = string
   default     = null
+  sensitive   = true
+
+  validation {
+    condition     = var.alb_listener_certificate_arn == null || can(regex("^arn:aws:acm:", var.alb_listener_certificate_arn))
+    error_message = "Certificate ARN must be a valid ACM certificate ARN starting with 'arn:aws:acm:'."
+  }
 }
 
 # Tags

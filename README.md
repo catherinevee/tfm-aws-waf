@@ -290,6 +290,10 @@ See the `examples/` directory for complete working examples:
 - `examples/alb/` - WAF with ALB integration
 - `examples/advanced/` - Advanced configuration with custom rules
 
+## Resource Map
+
+For a detailed overview of all AWS resources created by this module, see [RESOURCE_MAP.md](RESOURCE_MAP.md).
+
 ## Security Best Practices
 
 1. **Enable All Security Rules**: Use all available AWS managed rules for comprehensive protection
